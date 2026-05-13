@@ -18,11 +18,16 @@ class Settings(BaseSettings):
     celery_broker_url: str = "redis://redis:6379/1"
     celery_result_backend: str = "redis://redis:6379/2"
 
+    # Binance
+    binance_ws_base: str = "wss://stream.binance.com:9443"
+
     # Trading
     supported_symbols: list[str] = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"]
     supported_intervals: list[str] = ["1m", "5m", "15m", "1h", "4h", "1d"]
     paper_trading_initial_balance: float = 10_000.0
     default_fee_rate: float = 0.001
+    candle_cache_size: int = 200
+    indicator_cache_ttl: int = 60
 
 
 @lru_cache

@@ -1,10 +1,20 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy import create_engine
-from app.core.config import settings
+import os
+
+# Read directly from environment to avoid any config caching issues
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql+asyncpg://tradescope:tradescope@db:5432/tradescope"
+)
+SYNC_DATABASE_URL = os.environ.get(
+    "SYNC_DATABASE_URL",
+    "postgresql+psycopg2://tradescope:tradescope@db:5432/tradescope"
+)
 
 # Async engine — used by FastAPI
 engine = create_async_engine(
-    settings.database_url,
+    DATABASE_URL,
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
@@ -16,8 +26,8 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False,
 )
 
-# Sync engine — used by Alembic migrations only
-sync_engine = create_engine(settings.sync_database_url)
+# Sync engine — used by Alembic only
+sync_engine = create_engine(SYNC_DATABASE_URL)
 
 
 async def get_db():

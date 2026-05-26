@@ -217,8 +217,7 @@ def run_backtest(self, run_id: int) -> dict:
         # {"entry_price": float, "entry_time": datetime, "size": float}
         position = None
         trades = []
-        equity_curve = [
-            {"timestamp": str(candles[0].timestamp), "value": capital}]
+        equity_curve = []
 
         for idx, candle in enumerate(candles):
             indicators = compute_indicators_for_candle(

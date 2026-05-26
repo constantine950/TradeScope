@@ -19,12 +19,18 @@ async def create_backtest_run(db: AsyncSession, data: BacktestCreate) -> Backtes
     await db.flush()
     await db.refresh(run)
 
-    # Dispatch Celery task
     task = run_backtest.delay(run.id)
     run.celery_task_id = task.id
     await db.flush()
 
     return run
+
+
+async def list_runs(db: AsyncSession) -> list[BacktestRun]:
+    result = await db.execute(
+        select(BacktestRun).order_by(BacktestRun.created_at.desc())
+    )
+    return list(result.scalars().all())
 
 
 async def get_run(db: AsyncSession, run_id: int) -> BacktestRun | None:

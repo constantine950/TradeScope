@@ -6,6 +6,7 @@ from app.services.backtest_service import (
     get_run,
     get_results,
     get_trades,
+    list_runs,
 )
 
 router = APIRouter(prefix="/backtests", tags=["backtests"])
@@ -14,6 +15,11 @@ router = APIRouter(prefix="/backtests", tags=["backtests"])
 @router.post("", response_model=BacktestRunOut, status_code=201)
 async def create(db: DbSession, data: BacktestCreate):
     return await create_backtest_run(db, data)
+
+
+@router.get("/all", response_model=list[BacktestRunOut])
+async def list_all(db: DbSession):
+    return await list_runs(db)
 
 
 @router.get("/{run_id}", response_model=BacktestRunOut)
@@ -26,9 +32,15 @@ async def get_one(db: DbSession, run_id: int):
 
 @router.get("/{run_id}/results", response_model=BacktestResultOut)
 async def results(db: DbSession, run_id: int):
+    run = await get_run(db, run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Backtest run not found")
+    if run.status != "done":
+        raise HTTPException(
+            status_code=202, detail=f"Backtest status: {run.status}")
     result = await get_results(db, run_id)
     if not result:
-        raise HTTPException(status_code=404, detail="Results not ready yet")
+        raise HTTPException(status_code=404, detail="Results not found")
     return result
 
 

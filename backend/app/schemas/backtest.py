@@ -27,6 +27,7 @@ class BacktestTradeOut(BaseModel):
 
 
 class BacktestResultOut(BaseModel):
+    run_id: int
     total_return_pct: float | None
     sharpe_ratio: float | None
     max_drawdown_pct: float | None

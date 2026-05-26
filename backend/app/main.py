@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.websocket.manager import start_feed, stop_feed
-from app.api.routes import candles, symbols, indicators, strategies
+from app.api.routes import candles, symbols, indicators, strategies, backtests
 
 
 @asynccontextmanager
@@ -29,6 +29,7 @@ app.include_router(candles.router)
 app.include_router(symbols.router)
 app.include_router(indicators.router)
 app.include_router(strategies.router)
+app.include_router(backtests.router)
 
 
 @app.get("/health")

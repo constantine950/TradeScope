@@ -10,10 +10,16 @@ from app.core.config import settings
 
 
 SEED_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT"]
-INTERVAL = "1h"
+INTERVALS_CONFIG = {
+    "1m":  timedelta(minutes=1),
+    "5m":  timedelta(minutes=5),
+    "15m": timedelta(minutes=15),
+    "1h":  timedelta(hours=1),
+    "4h":  timedelta(hours=4),
+    "1d":  timedelta(days=1),
+}
 DAYS = 90
 
-# Realistic starting prices
 START_PRICES = {
     "BTCUSDT": 65_000.0,
     "ETHUSDT": 3_200.0,
@@ -21,15 +27,16 @@ START_PRICES = {
 }
 
 
-def generate_candles(symbol: str, start_price: float) -> list[dict]:
+def generate_candles(symbol: str, interval: str, delta: timedelta, start_price: float) -> list[dict]:
     candles = []
     price = start_price
-    now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
     start = now - timedelta(days=DAYS)
 
+    # Align start to interval boundary
     current = start
     while current <= now:
-        change = random.uniform(-0.02, 0.02)  # ±2% per candle
+        change = random.uniform(-0.02, 0.02)
         open_ = price
         close = round(open_ * (1 + change), 4)
         high = round(max(open_, close) * random.uniform(1.0, 1.015), 4)
@@ -38,7 +45,7 @@ def generate_candles(symbol: str, start_price: float) -> list[dict]:
 
         candles.append({
             "symbol": symbol,
-            "interval": INTERVAL,
+            "interval": interval,
             "timestamp": current,
             "open": open_,
             "high": high,
@@ -49,7 +56,7 @@ def generate_candles(symbol: str, start_price: float) -> list[dict]:
         })
 
         price = close
-        current += timedelta(hours=1)
+        current += delta
 
     return candles
 
@@ -58,15 +65,16 @@ def seed():
     from app.models.ohlcv import OHLCV
 
     with sync_engine.begin() as conn:
-        # Clear existing seed data
         conn.execute(text("DELETE FROM ohlcv WHERE symbol = ANY(:symbols)"),
                      {"symbols": SEED_SYMBOLS})
 
         for symbol in SEED_SYMBOLS:
-            print(f"Seeding {symbol}...")
-            candles = generate_candles(symbol, START_PRICES[symbol])
-            conn.execute(insert(OHLCV), candles)
-            print(f"  inserted {len(candles)} candles")
+            for interval, delta in INTERVALS_CONFIG.items():
+                print(f"Seeding {symbol} {interval}...")
+                candles = generate_candles(
+                    symbol, interval, delta, START_PRICES[symbol])
+                conn.execute(insert(OHLCV), candles)
+                print(f"  inserted {len(candles)} candles")
 
     print("Seed complete.")
 

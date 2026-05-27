@@ -119,9 +119,11 @@ async def run_feed() -> None:
                 backoff = 1
                 print("Kraken WS connected", flush=True)
 
-                sub_msg = build_subscribe_message(
-                    settings.supported_symbols, "1m")
-                await ws.send(json.dumps(sub_msg))
+                # Subscribe to all intervals for all symbols
+                for interval in settings.supported_intervals:
+                    sub_msg = build_subscribe_message(
+                        settings.supported_symbols, interval)
+                    await ws.send(json.dumps(sub_msg))
 
                 async for message in ws:
                     data = json.loads(message)

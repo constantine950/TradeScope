@@ -19,10 +19,6 @@ from app.core.config import settings
 
 
 def evaluate_condition(condition: dict, indicators: dict) -> tuple[bool, float]:
-    """
-    Evaluate a single condition against current indicator values.
-    Returns (met: bool, score: float 0-100)
-    """
     indicator = condition["indicator"]
     operator = condition["operator"]
     threshold = condition["value"]
@@ -36,29 +32,29 @@ def evaluate_condition(condition: dict, indicators: dict) -> tuple[bool, float]:
 
     if operator == "<":
         met = current_value < threshold
-        # Score: how far below threshold (0-100)
-        score = max(
-            0.0, min(100.0, (threshold - current_value) / threshold * 100))
+        # Score 0-100: higher when further below threshold
+        distance = (threshold - current_value) / (threshold or 1)
+        score = max(0.0, min(100.0, distance * 100))
     elif operator == ">":
         met = current_value > threshold
-        score = max(
-            0.0, min(100.0, (current_value - threshold) / threshold * 100))
+        distance = (current_value - threshold) / (threshold or 1)
+        score = max(0.0, min(100.0, distance * 100))
     elif operator == "<=":
         met = current_value <= threshold
-        score = max(
-            0.0, min(100.0, (threshold - current_value) / threshold * 100 + 1))
+        distance = (threshold - current_value) / (threshold or 1)
+        score = max(0.0, min(100.0, distance * 100 + 1))
     elif operator == ">=":
         met = current_value >= threshold
-        score = max(
-            0.0, min(100.0, (current_value - threshold) / threshold * 100 + 1))
+        distance = (current_value - threshold) / (threshold or 1)
+        score = max(0.0, min(100.0, distance * 100 + 1))
     elif operator == "==":
-        met = abs(current_value - threshold) < 0.01
+        met = abs(current_value - float(threshold)) < 0.01
         score = 100.0 if met else 0.0
     else:
         met = False
         score = 0.0
 
-    return met, score
+    return met, round(score, 4)
 
 
 def compute_indicators_for_candle(candles: list, idx: int, conditions: list) -> dict:

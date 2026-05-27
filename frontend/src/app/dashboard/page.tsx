@@ -1,25 +1,14 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Candle } from "../../types/candle";
-import { fetchCandles } from "../../lib/api";
+import { useState } from "react";
+import { useCandles } from "../../hooks/useCandles";
 import ChartToolbar from "../../components/chart/ChartToolbar";
 import CandlestickChart from "../../components/chart/CandlestickChart";
 
 export default function DashboardPage() {
   const [symbol, setSymbol] = useState("BTCUSDT");
   const [interval, setInterval] = useState("1h");
-  const [candles, setCandles] = useState<Candle[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    fetchCandles(symbol, interval, 200)
-      .then(setCandles)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [symbol, interval]);
+  const { candles, loading, error } = useCandles(symbol, interval);
 
   const lastCandle = candles[candles.length - 1];
   const firstCandle = candles[0];
@@ -37,7 +26,6 @@ export default function DashboardPage() {
         background: "var(--bg-primary)",
       }}
     >
-      {/* Header */}
       <div
         style={{
           padding: "12px 16px",
@@ -58,7 +46,6 @@ export default function DashboardPage() {
         </span>
       </div>
 
-      {/* Toolbar */}
       <ChartToolbar
         symbol={symbol}
         interval={interval}
@@ -68,7 +55,6 @@ export default function DashboardPage() {
         priceChange={priceChange}
       />
 
-      {/* Chart */}
       <div style={{ flex: 1, position: "relative" }}>
         {loading && (
           <div

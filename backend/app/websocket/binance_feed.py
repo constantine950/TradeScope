@@ -68,7 +68,7 @@ def parse_kraken_ohlc(msg: dict) -> list[dict]:
                 "interval": interval,
                 "timestamp": datetime.fromisoformat(
                     item["timestamp"].replace("Z", "+00:00")
-                ),
+                ).isoformat(),
                 "open": float(item["open"]),
                 "high": float(item["high"]),
                 "low": float(item["low"]),
@@ -83,19 +83,21 @@ def parse_kraken_ohlc(msg: dict) -> list[dict]:
 
 
 async def upsert_candle(candle: dict) -> None:
+    from datetime import datetime as dt
+    db_candle = {**candle, "timestamp": dt.fromisoformat(candle["timestamp"])}
     async with AsyncSessionLocal() as session:
         stmt = (
             insert(OHLCV)
-            .values(**candle)
+            .values(**db_candle)
             .on_conflict_do_update(
                 constraint="uq_ohlcv_symbol_interval_ts",
                 set_={
-                    "open": candle["open"],
-                    "high": candle["high"],
-                    "low": candle["low"],
-                    "close": candle["close"],
-                    "volume": candle["volume"],
-                    "is_closed": candle["is_closed"],
+                    "open": db_candle["open"],
+                    "high": db_candle["high"],
+                    "low": db_candle["low"],
+                    "close": db_candle["close"],
+                    "volume": db_candle["volume"],
+                    "is_closed": db_candle["is_closed"],
                 },
             )
         )
@@ -105,11 +107,13 @@ async def upsert_candle(candle: dict) -> None:
 
 async def cache_candle(candle: dict) -> None:
     key = candle_cache_key(candle["symbol"], candle["interval"])
-    cacheable = {**candle, "timestamp": candle["timestamp"].isoformat()}
-    await lpush_trim(key, cacheable, maxlen=settings.candle_cache_size)
+    await lpush_trim(key, candle, maxlen=settings.candle_cache_size)
 
 
 async def run_feed() -> None:
+    # Import here to avoid circular import
+    from app.websocket.manager import broadcast_candle
+
     backoff = 1
 
     while True:
@@ -119,7 +123,6 @@ async def run_feed() -> None:
                 backoff = 1
                 print("Kraken WS connected", flush=True)
 
-                # Subscribe to all intervals for all symbols
                 for interval in settings.supported_intervals:
                     sub_msg = build_subscribe_message(
                         settings.supported_symbols, interval)
@@ -131,6 +134,8 @@ async def run_feed() -> None:
 
                     for candle in candles:
                         await cache_candle(candle)
+                        await broadcast_candle(candle)
+
                         if candle["is_closed"]:
                             await upsert_candle(candle)
                             print(

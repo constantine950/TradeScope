@@ -22,3 +22,10 @@ celery_app.conf.update(
     task_track_started=True,
     result_expires=3600,
 )
+
+celery_app.conf.beat_schedule = {
+    "evaluate-alerts-every-minute": {
+        "task": "app.tasks.alert_task.evaluate_all_alerts",
+        "schedule": crontab(minute="*"),
+    },
+}

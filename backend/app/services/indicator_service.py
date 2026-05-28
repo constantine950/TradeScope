@@ -142,9 +142,17 @@ async def compute_bbands(
 
     bbands = ta.bbands(df["close"], length=period)
 
-    lower_col = f"BBL_{period}_2.0"
-    middle_col = f"BBM_{period}_2.0"
-    upper_col = f"BBU_{period}_2.0"
+    if bbands is None or bbands.empty:
+        return []
+
+    # Dynamically find column names — pandas-ta may vary
+    cols = bbands.columns.tolist()
+    lower_col = next((c for c in cols if c.startswith("BBL_")), None)
+    middle_col = next((c for c in cols if c.startswith("BBM_")), None)
+    upper_col = next((c for c in cols if c.startswith("BBU_")), None)
+
+    if not all([lower_col, middle_col, upper_col]):
+        return []
 
     result = [
         {

@@ -2,6 +2,13 @@
 import SymbolSwitcher from "./SymbolSwitcher";
 import IntervalSwitcher from "./IntervalSwitcher";
 
+export interface IndicatorToggles {
+  sma: boolean;
+  ema: boolean;
+  bbands: boolean;
+  rsi: boolean;
+}
+
 interface Props {
   symbol: string;
   interval: string;
@@ -9,7 +16,20 @@ interface Props {
   onIntervalChange: (i: string) => void;
   lastPrice?: number;
   priceChange?: number;
+  indicators: IndicatorToggles;
+  onIndicatorToggle: (key: keyof IndicatorToggles) => void;
 }
+
+const INDICATOR_BUTTONS: {
+  key: keyof IndicatorToggles;
+  label: string;
+  color: string;
+}[] = [
+  { key: "sma", label: "SMA", color: "#f59e0b" },
+  { key: "ema", label: "EMA", color: "#a78bfa" },
+  { key: "bbands", label: "BB", color: "#60a5fa" },
+  { key: "rsi", label: "RSI", color: "#f472b6" },
+];
 
 export default function ChartToolbar({
   symbol,
@@ -18,6 +38,8 @@ export default function ChartToolbar({
   onIntervalChange,
   lastPrice,
   priceChange,
+  indicators,
+  onIndicatorToggle,
 }: Props) {
   const isPositive = (priceChange ?? 0) >= 0;
 
@@ -34,12 +56,35 @@ export default function ChartToolbar({
       }}
     >
       <SymbolSwitcher value={symbol} onChange={onSymbolChange} />
-
+      <div
+        style={{ width: "1px", height: "20px", background: "var(--border)" }}
+      />
+      <IntervalSwitcher value={interval} onChange={onIntervalChange} />
       <div
         style={{ width: "1px", height: "20px", background: "var(--border)" }}
       />
 
-      <IntervalSwitcher value={interval} onChange={onIntervalChange} />
+      {/* Indicator toggles */}
+      <div style={{ display: "flex", gap: "4px" }}>
+        {INDICATOR_BUTTONS.map(({ key, label, color }) => (
+          <button
+            key={key}
+            onClick={() => onIndicatorToggle(key)}
+            style={{
+              padding: "4px 10px",
+              borderRadius: "4px",
+              border: `1px solid ${indicators[key] ? color : "var(--border)"}`,
+              background: indicators[key] ? `${color}22` : "transparent",
+              color: indicators[key] ? color : "var(--text-secondary)",
+              cursor: "pointer",
+              fontSize: "12px",
+              fontWeight: 500,
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {lastPrice && (
         <>

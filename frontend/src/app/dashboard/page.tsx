@@ -98,6 +98,67 @@ export default function DashboardPage() {
         </span>
       </div>
 
+      <div
+        style={{
+          display: "flex",
+          borderBottom: "1px solid var(--border)",
+          background: "var(--bg-secondary)",
+        }}
+      >
+        <a
+          href="/dashboard"
+          style={{
+            padding: "10px 20px",
+            fontSize: "13px",
+            fontWeight: 500,
+            borderBottom: "2px solid var(--accent)",
+            color: "var(--text-primary)",
+            textDecoration: "none",
+          }}
+        >
+          Chart
+        </a>
+        <a
+          href="/strategy"
+          style={{
+            padding: "10px 20px",
+            fontSize: "13px",
+            fontWeight: 500,
+            borderBottom: "2px solid transparent",
+            color: "var(--text-secondary)",
+            textDecoration: "none",
+          }}
+        >
+          Strategy
+        </a>
+        <a
+          href="/backtest"
+          style={{
+            padding: "10px 20px",
+            fontSize: "13px",
+            fontWeight: 500,
+            borderBottom: "2px solid transparent",
+            color: "var(--text-secondary)",
+            textDecoration: "none",
+          }}
+        >
+          Backtest
+        </a>
+        <a
+          href="/paper"
+          style={{
+            padding: "10px 20px",
+            fontSize: "13px",
+            fontWeight: 500,
+            borderBottom: "2px solid transparent",
+            color: "var(--text-secondary)",
+            textDecoration: "none",
+          }}
+        >
+          Paper
+        </a>
+      </div>
+
       <ChartToolbar
         symbol={symbol}
         interval={interval}

@@ -6,8 +6,16 @@ import BacktestResults from "../../components/backtest/BacktestResults";
 
 export default function BacktestPage() {
   const { strategies, loading: strategiesLoading } = useStrategies();
-  const { run, result, trades, loading, polling, error, startBacktest } =
-    useBacktest();
+  const {
+    run,
+    result,
+    trades,
+    equityCurve,
+    loading,
+    polling,
+    error,
+    startBacktest,
+  } = useBacktest();
 
   return (
     <div
@@ -180,6 +188,7 @@ export default function BacktestPage() {
             <BacktestResults
               result={result}
               trades={trades}
+              equityCurve={equityCurve}
               initialCapital={run?.initial_capital ?? 10000}
             />
           )}

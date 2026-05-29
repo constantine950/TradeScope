@@ -103,3 +103,31 @@ export async function fetchEquityCurve(id: number) {
   return res.json();
   ``;
 }
+
+export async function fetchPortfolio(name = "default") {
+  const res = await fetch(`${API_URL}/paper/portfolio?name=${name}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch portfolio");
+  return res.json();
+}
+
+export async function executePaperTrade(
+  data: {
+    symbol: string;
+    action: "BUY" | "SELL";
+    quantity?: number;
+  },
+  portfolio = "default",
+) {
+  const res = await fetch(`${API_URL}/paper/trade?portfolio=${portfolio}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Trade failed");
+  }
+  return res.json();
+}

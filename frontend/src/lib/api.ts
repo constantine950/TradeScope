@@ -131,3 +131,9 @@ export async function executePaperTrade(
   }
   return res.json();
 }
+
+export async function fetchAllBacktests() {
+  const res = await fetch(`${API_URL}/backtests/all`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch backtests");
+  return res.json();
+}

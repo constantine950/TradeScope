@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     supported_intervals: list[str] = ["1m", "5m", "15m", "1h", "4h", "1d"]
     paper_trading_initial_balance: float = 10_000.0
     default_fee_rate: float = 0.001
-    candle_cache_size: int = 200
-    indicator_cache_ttl: int = 60
+    indicator_cache_ttl: int = 300
+    candle_cache_size: int = 500
 
 
 @lru_cache

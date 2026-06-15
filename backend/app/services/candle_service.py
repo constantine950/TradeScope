@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from app.models.ohlcv import OHLCV
-from app.core.redis import lrange_all, candle_cache_key
+from app.core.redis import lrange_all, candle_cache_key, cache_get, cache_set
 from app.core.config import settings
 
 
@@ -13,13 +13,11 @@ async def get_candles(
 ) -> list[dict]:
     symbol = symbol.upper()
 
-    # 1. Try Redis cache — but only use it for 1m interval
-    # Higher intervals have too many duplicate open candles in cache
+    # 1. Try Redis ring buffer for 1m — live data
     if interval == "1m":
         key = candle_cache_key(symbol, interval)
         cached = await lrange_all(key)
         if cached:
-            # Deduplicate by timestamp, keep latest version of each
             seen = {}
             for candle in cached:
                 ts = candle["timestamp"]
@@ -28,7 +26,13 @@ async def get_candles(
             deduped.sort(key=lambda c: c["timestamp"])
             return deduped[-limit:]
 
-    # 2. DB query for all intervals
+    # 2. Try Redis cache for other intervals
+    cache_key = f"candles_query:{symbol}:{interval}:{limit}"
+    cached = await cache_get(cache_key)
+    if cached:
+        return cached
+
+    # 3. DB query
     stmt = (
         select(OHLCV)
         .where(
@@ -59,6 +63,8 @@ async def get_candles(
         for r in reversed(rows)
     ]
 
+    # Cache for 30 seconds
+    await cache_set(cache_key, candles, ttl=30)
     return candles
 
 

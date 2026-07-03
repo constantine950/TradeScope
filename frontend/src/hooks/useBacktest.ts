@@ -73,8 +73,13 @@ export function useBacktest() {
         setRun(newRun);
         setLoading(false);
         await pollUntilDone(newRun.id);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to start backtest");
+      } catch (e: unknown) {
+        // Extract FastAPI validation error detail
+        if (e instanceof Error) {
+          setError(e.message);
+        } else {
+          setError("Failed to start backtest");
+        }
         setLoading(false);
       }
     },

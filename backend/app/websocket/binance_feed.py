@@ -111,16 +111,21 @@ async def cache_candle(candle: dict) -> None:
 
 
 async def run_feed() -> None:
-    # Import here to avoid circular import
     from app.websocket.manager import broadcast_candle
 
     backoff = 1
+    max_backoff = 60
 
     while True:
         try:
             print(f"Connecting to Kraken WS: {KRAKEN_WS_URL}", flush=True)
-            async with websockets.connect(KRAKEN_WS_URL, ping_interval=20) as ws:
-                backoff = 1
+            async with websockets.connect(
+                KRAKEN_WS_URL,
+                ping_interval=20,
+                ping_timeout=10,
+                close_timeout=10,
+            ) as ws:
+                backoff = 1  # reset on successful connect
                 print("Kraken WS connected", flush=True)
 
                 for interval in settings.supported_intervals:
@@ -145,10 +150,13 @@ async def run_feed() -> None:
 
         except websockets.exceptions.ConnectionClosed as e:
             print(
-                f"Kraken WS disconnected: {e}. Reconnecting in {backoff}s...", flush=True)
-        except Exception as e:
+                f"Kraken WS closed: {e}. Reconnecting in {backoff}s...", flush=True)
+        except websockets.exceptions.WebSocketException as e:
             print(
                 f"Kraken WS error: {e}. Reconnecting in {backoff}s...", flush=True)
+        except Exception as e:
+            print(
+                f"Kraken WS unexpected error: {e}. Reconnecting in {backoff}s...", flush=True)
 
         await asyncio.sleep(backoff)
-        backoff = min(backoff * 2, 60)
+        backoff = min(backoff * 2, max_backoff)

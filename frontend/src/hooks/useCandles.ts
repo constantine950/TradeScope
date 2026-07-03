@@ -1,26 +1,36 @@
 import { useState, useEffect, useCallback } from "react";
+import { Candle } from "@/types/candle";
+import { fetchCandles } from "@/lib/api";
 import { useWebSocket } from "./useWebSocket";
-import { Candle } from "../types/candle";
-import { fetchCandles } from "../lib/api";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
+
+function deduplicateAndSort(candles: Candle[]): Candle[] {
+  const seen = new Map<string, Candle>();
+  for (const candle of candles) {
+    // Keep the latest version of each timestamp
+    seen.set(candle.timestamp, candle);
+  }
+  return Array.from(seen.values()).sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+  );
+}
 
 export function useCandles(symbol: string, interval: string, limit = 200) {
   const [candles, setCandles] = useState<Candle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initial fetch
   useEffect(() => {
     setLoading(true);
     setError(null);
+    setCandles([]);
     fetchCandles(symbol, interval, limit)
-      .then(setCandles)
+      .then((data) => setCandles(deduplicateAndSort(data)))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [symbol, interval, limit]);
 
-  // Live updates via WebSocket
   const handleMessage = useCallback(
     (data: unknown) => {
       const candle = data as Candle;
@@ -34,11 +44,9 @@ export function useCandles(symbol: string, interval: string, limit = 200) {
         const lastTime = new Date(last.timestamp).getTime();
 
         if (incomingTime === lastTime) {
-          // Update existing last candle
           return [...prev.slice(0, -1), candle];
         } else if (incomingTime > lastTime) {
-          // New candle — append and trim to limit
-          return [...prev.slice(-limit + 1), candle];
+          return deduplicateAndSort([...prev.slice(-limit + 1), candle]);
         }
         return prev;
       });

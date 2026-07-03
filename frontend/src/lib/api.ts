@@ -69,7 +69,10 @@ export async function createBacktest(data: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create backtest");
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || "Failed to create backtest");
+  }
   return res.json();
 }
 

@@ -90,6 +90,9 @@ export default function DashboardPage() {
       >
         <span
           style={{ fontWeight: 700, fontSize: "16px", color: "var(--accent)" }}
+          onClick={() => {
+            window.location.href = "/";
+          }}
         >
           TradeScope
         </span>

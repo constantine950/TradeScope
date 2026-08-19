@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { Candle } from "@/types/candle";
-import { fetchCandles } from "@/lib/api";
 import { useWebSocket } from "./useWebSocket";
+import { Candle } from "../types/candle";
+import { fetchCandles } from "../lib/api";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
 
